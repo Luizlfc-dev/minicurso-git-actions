@@ -1,0 +1,56 @@
+# Exercício 3 (bônus). Matrix e artifact.
+# O mesmo job roda em dois sistemas operacionais ao mesmo tempo, e cada
+# execução guarda um relatório como artifact para baixar depois.
+# Só roda pelo botão "Run workflow", para não gastar fila à toa.
+
+name: Bônus, matrix e artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  relatorio:
+    name: Relatório em ${{ matrix.os }}
+    strategy:
+      # Se uma combinação falhar, as outras continuam até o fim.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        # No Windows o padrão seria o PowerShell. Aqui todos usam bash.
+        shell: bash
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Rodar a verificação
+        run: bash scripts/check.sh config.txt
+
+      - name: Gerar o relatório
+        env:
+          SISTEMA: ${{ matrix.os }}
+        run: |
+          {
+            echo "Relatório gerado em $SISTEMA"
+            echo "Data (UTC): $(date -u '+%d/%m/%Y %H:%M:%S')"
+            echo "uname: $(uname -a)"
+            echo "bash: ${BASH_VERSION}"
+            echo
+            bash scripts/check.sh config.txt
+          } > "relatorio-${SISTEMA}.txt"
+          cat "relatorio-${SISTEMA}.txt"
+
+      - name: Guardar o relatório como artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-${{ matrix.os }}
+          path: relatorio-${{ matrix.os }}.txt
+          retention-days: 3

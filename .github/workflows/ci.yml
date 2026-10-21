@@ -1,0 +1,36 @@
+# Exercício 2 da prática. Um CI de verdade, em miniatura.
+# Ele confere o config.txt em todo PR para a main e em todo push na main.
+# Se o script sair com erro, o check fica vermelho e o PR mostra o X.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Se chegar um push novo no mesmo PR, a execução anterior é cancelada.
+# Na main a execução em andamento não é interrompida, e o push novo espera.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verificar:
+    # Este nome é o que aparece como check no PR e no ruleset.
+    name: Conferir config.txt
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+        with:
+          # O job só lê arquivos, então não precisa guardar a credencial do git.
+          persist-credentials: false
+
+      - name: Rodar a verificação
+        run: bash scripts/check.sh config.txt

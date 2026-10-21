@@ -1,0 +1,68 @@
+# Exercício 1 da prática. O primeiro workflow, sem nada para instalar.
+# Ele roda quando chega um push na main e quando alguém clica em "Run workflow".
+
+name: Olá, Actions
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      nome:
+        description: Quem o workflow deve cumprimentar
+        required: false
+        default: turma
+
+# O GITHUB_TOKEN deste workflow só consegue ler o repositório.
+permissions:
+  contents: read
+
+jobs:
+  ola:
+    name: Dizer olá
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mensagem de boas-vindas
+        env:
+          # No push não existe input, então o || usa "turma" como reserva.
+          NOME: ${{ inputs.nome || 'turma' }}
+        # O "|" faz o YAML tratar as linhas abaixo como texto puro do script.
+        run: |
+          echo "Olá, $NOME! Este passo está rodando numa máquina do GitHub Actions."
+
+      - name: Contexto da execução
+        # Valores do contexto github passam por env antes de chegar ao shell.
+        env:
+          ATOR: ${{ github.actor }}
+          EVENTO: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          COMMIT: ${{ github.sha }}
+          REPOSITORIO: ${{ github.repository }}
+        run: |
+          echo "Quem disparou ....: $ATOR"
+          echo "Evento ...........: $EVENTO"
+          echo "Branch ou tag ....: $REF"
+          echo "Commit ...........: $COMMIT"
+          echo "Repositório ......: $REPOSITORIO"
+
+      - name: Data e máquina
+        run: |
+          echo "Data e hora (UTC) : $(date -u '+%d/%m/%Y %H:%M:%S')"
+          echo "Sistema ..........: $(uname -sr)"
+          echo "Pasta de trabalho : $PWD"
+
+      - name: Resumo da execução
+        env:
+          ATOR: ${{ github.actor }}
+          EVENTO: ${{ github.event_name }}
+        run: |
+          {
+            echo "### Olá, Actions"
+            echo ""
+            echo "| Campo | Valor |"
+            echo "| --- | --- |"
+            echo "| Quem disparou | $ATOR |"
+            echo "| Evento | $EVENTO |"
+            echo "| Data (UTC) | $(date -u '+%d/%m/%Y %H:%M') |"
+          } >> "$GITHUB_STEP_SUMMARY"

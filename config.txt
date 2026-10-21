@@ -1,0 +1,11 @@
+# Configuração usada na prática do minicurso.
+# O workflow de CI roda scripts/check.sh, que confere as regras abaixo.
+#
+# Regras
+#   PROJETO       obrigatório, qualquer texto sem espaço
+#   TEMPO_LIMITE  obrigatório, número inteiro entre 1 e 300
+#   UNIDADE       obrigatório, "segundos" ou "minutos"
+
+PROJETO=minicurso-git-actions
+TEMPO_LIMITE=30
+UNIDADE=segundos
